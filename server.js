@@ -1,13 +1,41 @@
 import http from 'http'
 import fs from 'fs'
+import { URL } from 'url'
 
 const BASE_URL = 'http://localhost:5454'
+const ANALYTICS_PROXY = 'http://localhost:5454'
 const PORT = 3001
-const DASHBOARD_ID = process.env.DASHBOARD_ID ?? 'hktf9zy22rurvut8txg931m9';
-const API_KEY = process.env.API_KEY ?? 'shaperkey.dezrwe4wk1ib1ps1l800d21h.JXPttYgCVakWLZkVdIaT5p7wk0B2lBfZ';
-const VARIABLES = JSON.parse(process.env.VARIABLES ?? '{"user_id": "user_1"}');
+const DASHBOARD_ID = process.env.DASHBOARD_ID ?? 'demo-dashboard';
+const API_KEY = process.env.API_KEY;
+const VARIABLES = JSON.parse(process.env.VARIABLES ?? '{"insurance_id": "medicare"}');
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer((req, res) => {
+  // Proxy /analytics to localhost:5454
+  if (req.url.startsWith('/analytics')) {
+    const targetPath = req.url.replace(/^\/analytics/, '') || '/'
+    const targetUrl = new URL(targetPath, ANALYTICS_PROXY)
+
+    const headers = { ...req.headers }
+    delete headers.host
+
+    const proxyReq = http.request(targetUrl.toString(), {
+      method: req.method,
+      headers,
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers)
+      proxyRes.pipe(res)
+    })
+
+    proxyReq.on('error', (err) => {
+      console.error('Proxy error:', err)
+      res.writeHead(502)
+      res.end('Proxy error')
+    })
+
+    req.pipe(proxyReq)
+    return
+  }
+
   // Get JWT from Shaper API
   if (req.url === '/api/jwt' && req.method === 'POST') {
     // In production you would need to authenticate the users first
@@ -17,6 +45,20 @@ const server = http.createServer(async (req, res) => {
     })
     req.on('end', async () => {
       try {
+        let variables = { ...VARIABLES };
+        if (body) {
+          try {
+            const parsed = JSON.parse(body);
+            if (parsed.insurance_id) {
+              variables.insurance_id = parsed.insurance_id;
+            } else if (parsed.variables) {
+              variables = { ...variables, ...parsed.variables };
+            }
+          } catch (e) {
+            console.error('Error parsing request body:', e);
+          }
+        }
+
         // Here we send a request to the Shaper API to get a JWT token
         const r = await fetch(`${BASE_URL}/api/auth/token`, {
           method: "POST",
@@ -26,7 +68,7 @@ const server = http.createServer(async (req, res) => {
           body: JSON.stringify({
             token: API_KEY,
             dashboardId: DASHBOARD_ID,
-            variables: VARIABLES,
+            variables,
           }),
         })
         if (r.status !== 200) {
@@ -60,10 +102,11 @@ const server = http.createServer(async (req, res) => {
       return
     }
     res.writeHead(200, { 'Content-Type': 'text/html' })
-    content = content.toString().replace('$BASE_URL', BASE_URL)
-    content = content.toString().replace('$DASHBOARD_ID', DASHBOARD_ID)
-    content = content.toString().replace('$VARIABLES', JSON.stringify(VARIABLES))
-    res.end(content)
+    let html = content.toString();
+    html = html.replaceAll('$BASE_URL', BASE_URL);
+    html = html.replaceAll('$DASHBOARD_ID', DASHBOARD_ID);
+    html = html.replaceAll('$VARIABLES', JSON.stringify(VARIABLES));
+    res.end(html)
   })
 })
 

@@ -9,6 +9,9 @@
   },
   "scripts": {
     "start": "node server.js",
-    "shaper": "docker run --rm -it -p5454:5454 -v ./data:/data taleshape/shaper"
+    "shaper": "npx @taleshape/shaper -d .shaperdata --deploy shaper"
+  },
+  "dependencies": {
+    "@taleshape/shaper": "^0.24.1"
   }
 }
