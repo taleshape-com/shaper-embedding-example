@@ -89,3 +89,5 @@ SELECT
 FROM dataset
 GROUP BY Medication
 ORDER BY count(*) DESC;
+
+SELECT 'https://taleshape.com/shaper/docs/dashboard-embedding/'::FOOTER_LINK AS "More: Shaper Embedding Docs";
