@@ -2,7 +2,7 @@ import http from 'http'
 import fs from 'fs'
 import { URL } from 'url'
 
-const BASE_URL = 'http://localhost:5454'
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5454'
 const ANALYTICS_PROXY = 'http://localhost:5454'
 const PORT = 3001
 const DASHBOARD_ID = process.env.DASHBOARD_ID ?? 'demo-dashboard';
