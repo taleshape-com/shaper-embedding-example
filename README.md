@@ -6,26 +6,26 @@ See the [Shaper documentation](https://taleshape.com/shaper/docs/embedding/) for
 
 ---
 
-See the [index.html](./index.html) for you to include the Shaper embedding script and embed a dashboard.
+See the [index.html](./index.html) for how to include the Shaper embedding script and embed a dashboard.
 
 The HTML page is served by a Node.js server which also provides an endpoint to generate a JWT token.
 
 See [server.js](./server.js) for how to call the Shaper API to generate a JWT token.
 
-Make sure to only always generate the JWT on your server and never expose your API key in the client code.
+Make sure to only generate the JWT on the server and never expose your API key in the client code.
 
 
 ## Getting Started
 
 ### Run Shaper
 
-Make sure you have Docker installed and running. Then, start the Shaper server:
+Start Shaper:
 
 ```bash
 npm run shaper
 ```
 
-The demo database is included in the Git repository and it should work automatically.
+This automatically deploys [Demo.dashboard.sql](./shaper/Demo.dashboard.sql).
 
 You can visit the Shaper UI at http://localhost:5454
 
